@@ -1,76 +1,55 @@
 package main
 
 import (
-	"log/slog"
-	"os"
+    "encoding/base64"
+    "encoding/hex"
+    "flag"
+    "fmt"
+    "log"
+    "os"
 
-	"github.com/urfave/cli/v2"
-
-	"github.com/moond4rk/hackbrowserdata/browser"
-	"github.com/moond4rk/hackbrowserdata/logger"
-	"github.com/moond4rk/hackbrowserdata/utils/fileutil"
+    "github.com/moond4rk/hackbrowserdata/crypto"
 )
 
-var (
-	browserName  string
-	outputDir    string
-	outputFormat string
-	verbose      bool
-	compress     bool
-	profilePath  string
-	isFullExport bool
-)
-
-func main() {
-	Execute()
+func hexToBytes(hexStr string) ([]byte, error) {
+    return hex.DecodeString(hexStr)
 }
 
-func Execute() {
-	app := &cli.App{
-		Name:      "hack-browser-data",
-		Usage:     "Export passwords|bookmarks|cookies|history|credit cards|download history|localStorage|extensions from browser",
-		UsageText: "[hack-browser-data -b chrome -f json --dir results --zip]\nExport all browsing data (passwords/cookies/history/bookmarks) from browser\nGithub Link: https://github.com/moonD4rk/HackBrowserData",
-		Version:   "0.4.6",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{Name: "verbose", Aliases: []string{"vv"}, Destination: &verbose, Value: false, Usage: "verbose"},
-			&cli.BoolFlag{Name: "compress", Aliases: []string{"zip"}, Destination: &compress, Value: false, Usage: "compress result to zip"},
-			&cli.StringFlag{Name: "browser", Aliases: []string{"b"}, Destination: &browserName, Value: "all", Usage: "available browsers: all|" + browser.Names()},
-			&cli.StringFlag{Name: "results-dir", Aliases: []string{"dir"}, Destination: &outputDir, Value: "results", Usage: "export dir"},
-			&cli.StringFlag{Name: "format", Aliases: []string{"f"}, Destination: &outputFormat, Value: "csv", Usage: "output format: csv|json"},
-			&cli.StringFlag{Name: "profile-path", Aliases: []string{"p"}, Destination: &profilePath, Value: "", Usage: "custom profile dir path, get with chrome://version"},
-			&cli.BoolFlag{Name: "full-export", Aliases: []string{"full"}, Destination: &isFullExport, Value: true, Usage: "is export full browsing data"},
-		},
-		HideHelpCommand: true,
-		Action: func(c *cli.Context) error {
-			if verbose {
-				logger.Default.SetVerbose()
-				logger.Configure(logger.Default)
-			}
-			browsers, err := browser.PickBrowsers(browserName, profilePath)
-			if err != nil {
-				slog.Error("pick browsers error", "err", err)
-			}
+func main() {
+    flag.Parse()
+    if flag.NArg() < 1 {
+        fmt.Println("Usage: hack-browser-data <base64-encoded-data>")
+        os.Exit(1)
+    }
 
-			for _, b := range browsers {
-				data, err := b.BrowsingData(isFullExport)
-				if err != nil {
-					slog.Error("get browsing data error", "err", err)
-					continue
-				}
-				data.Output(outputDir, b.Name(), outputFormat)
-			}
+    base64EncodedData := flag.Arg(0)
 
-			if compress {
-				if err = fileutil.CompressDir(outputDir); err != nil {
-					slog.Error("compress error", "err", err)
-				}
-				slog.Info("compress success")
-			}
-			return nil
-		},
-	}
-	err := app.Run(os.Args)
-	if err != nil {
-		panic(err)
-	}
+    // Use the key and nonce you generated
+    keyHex := "73c6229fcc0f8316af12444411c939a4be864dc53f4912238cae40d787a61b0a"
+    nonceHex := "503b965809fefb6fc2ec95cd"
+
+    key, err := hexToBytes(keyHex)
+    if err != nil {
+        log.Fatalf("Error converting key from hex: %v\n", err)
+    }
+
+    nonce, err := hexToBytes(nonceHex)
+    if err != nil {
+        log.Fatalf("Error converting nonce from hex: %v\n", err)
+    }
+
+    // Decode the base64-encoded data
+    encodedData, err := base64.StdEncoding.DecodeString(base64EncodedData)
+    if err != nil {
+        log.Fatalf("Error decoding base64 data: %v\n", err)
+    }
+
+    // Decrypt the data
+    decryptedData, err := crypto.AESGCMDecrypt(key, nonce, encodedData)
+    if err != nil {
+        log.Fatalf("Error decrypting data: %v\n", err)
+    }
+
+    // Print the decrypted data
+    fmt.Printf("Decrypted data: %s\n", decryptedData)
 }
