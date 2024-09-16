@@ -1,30 +1,25 @@
-# Contributing to HackBrowserData
 
-We appreciate your interest in contributing to the HackBrowserData! This document provides some basic guidelines for contributors.
+### 4. **Version Control**
 
-## Getting Started
+**A. Commit Changes:**
+   - **Commit Messages**: Write clear, descriptive commit messages.
+   - **Frequency**: Commit often to capture incremental progress.
 
-- Always base your work from the `dev` branch, which is the development branch with the latest code.
-- Before creating a Pull Request (PR), make sure there is a corresponding issue for your contribution. If there isn't one already, please create one.
-- Include the problem description in the issue.
+**B. Push Updates:**
+   - **Push Commands**: Use `git push` to upload your changes to the remote repository.
+   - **Branching**: Consider using feature branches for new features and merging them into the main branch.
 
-## Pull Requests
+### 5. **Dependency Management**
 
-When creating a PR, please follow these guidelines:
+**A. Clean Up Dependencies:**
+   - **Run `go mod tidy`**: This removes unused dependencies and updates `go.mod` and `go.sum`.
 
-- Link your PR to the corresponding issue.
-- Provide context in the PR description to help reviewers understand the changes. The more information you provide, the faster the review process will be.
-- Include an example of running the tool with the changed code, if applicable. Provide 'before' and 'after' examples if possible.
-- Include steps for functional testing or replication.
-- If you're adding a new feature, make sure to include unit tests.
+**B. Update Dependencies:**
+   - **Add Dependencies**: Use `go get` to add new packages.
+   - **Update Packages**: Use `go get -u` to update packages to their latest versions.
 
-## Code Style
-
-Please adhere to the existing coding style for consistency.
-
-## Questions
-
-If you have any questions or need further guidance, please feel free to ask in the issue or PR, or [reach out to the maintainers](mailto:i@moond4rk.com). We will reply to you as soon as possible.
-
-Thank you for your contribution!
-
+**Example Commands:**
+```bash
+go mod tidy
+go get -u github.com/some/dependency
+ 
